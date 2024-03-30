@@ -10,8 +10,8 @@ name_on_order = st.text_input('Name on Smoothie:')
 if name_on_order:
     st.write('The name on your Smoothie will be:', name_on_order)
 
-# Initialize connection to Snowflake
-cnx = st.connection(type="snowflake", **st.secrets["snowflake"])
+# Attempt to provide a name for the connection if the API requires it
+cnx = st.connection(name="snowflake_connection", type="snowflake", **st.secrets["snowflake"])
 
 # Start a new session using the connection
 with cnx as session:
