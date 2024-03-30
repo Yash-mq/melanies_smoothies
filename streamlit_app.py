@@ -26,6 +26,15 @@ name_on_order = st.text_input('Name on Smoothie:')
 if name_on_order:
     st.write('The name on your Smoothie will be:', name_on_order)
 
+# Retrieve the table from the database and convert it to a dataframe
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'), col('SEARCH_ON'))
+
+# Display the dataframe in the Streamlit app
+st.dataframe(data=my_dataframe, use_container_width=True)
+
+# Stop the Streamlit app here to focus on the displayed dataframe
+st.stop()
+
 # Retrieve fruit options from Snowflake and display in multiselect
 try:
     cur.execute("SELECT Fruit_name FROM smoothies.public.fruit_options")
