@@ -1,13 +1,11 @@
 import streamlit as st
-# Assuming Snowflake's Python connector or Snowpark Python is properly set up
 import snowflake.connector
-from snowflake.snowpark.session import Session
+import requests
 
 # Access Snowflake credentials from Streamlit secrets
 snowflake_secrets = st.secrets["snowflake"]
 
 # Establish a connection to Snowflake
-# Adjust according to whether you're using the connector directly or Snowpark
 conn_params = {
     "account": snowflake_secrets["account"],
     "user": snowflake_secrets["user"],
@@ -21,9 +19,6 @@ conn_params = {
 conn = snowflake.connector.connect(**conn_params)
 cur = conn.cursor()
 
-# If using Snowpark for a session
-# session = Session.builder.configs(conn_params).create()
-
 st.title("🥤 Customize Your Smoothie! 🥤")
 st.write("Choose the fruits you want in your custom Smoothie!")
 
@@ -31,8 +26,7 @@ name_on_order = st.text_input('Name on Smoothie:')
 if name_on_order:
     st.write('The name on your Smoothie will be:', name_on_order)
 
-# Example query using cursor from Snowflake connector
-# Adjust the query according to your database structure
+# Retrieve fruit options from Snowflake and display in multiselect
 try:
     cur.execute("SELECT Fruit_name FROM smoothies.public.fruit_options")
     fruit_options = cur.fetchall()
@@ -44,25 +38,22 @@ try:
         max_selections=5
     )
 
-    if ingredients_list and st.button('Submit Order'):
+    if ingredients_list:
         ingredients_string = ', '.join(ingredients_list)
-        insert_query = f"""
-            INSERT INTO smoothies.public.orders (ingredients, name_on_order)
-            VALUES ('{ingredients_string}', '{name_on_order}')
-        """
-        cur.execute(insert_query)
-        st.success('Order Submitted')
+
+        if st.button('Submit Order'):
+            # Insert order into Snowflake
+            insert_query = f"""
+                INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+                VALUES ('{ingredients_string}', '{name_on_order}')
+            """
+            cur.execute(insert_query)
+            st.success('Order Submitted')
+
+            # After submitting the order, display nutritional information about a fruit
+            fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
+            fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
 
 finally:
     cur.close()
     conn.close()
-
-
-# New section to display fruityvice nutrition information
-import requests
-
-fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
-# st.text(fruityvice_response.json())  # This line is commented out
-
-# Convert the JSON response to a dataframe and display it using Streamlit
-fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
