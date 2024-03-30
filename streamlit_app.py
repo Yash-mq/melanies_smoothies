@@ -30,8 +30,13 @@ if name_on_order:
 # Retrieve fruit options from Snowflake and display in multiselect
 try:
     cur.execute("SELECT Fruit_name FROM smoothies.public.fruit_options")
+    fruit_options_df = cur.fetch_pandas_all() # This fetches the data into a pandas DataFrame
     fruit_options = cur.fetchall()
     fruit_names = [fruit[0] for fruit in fruit_options]
+
+    # Display the dataframe in Streamlit
+    st.write("Fruit Options:")
+    st.dataframe(fruit_options_df, use_container_width=True)
 
     ingredients_list = st.multiselect(
         'Choose up to 5 ingredients:',
@@ -56,6 +61,7 @@ try:
                 fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
             else:
                 st.error(f"Failed to get nutritional information for {fruit_chosen}")
+                
 
 finally:
     cur.close()
