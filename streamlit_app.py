@@ -38,21 +38,23 @@ try:
         max_selections=5
     )
 
-    if ingredients_list:
+    if ingredients_list and st.button('Submit Order'):
         ingredients_string = ', '.join(ingredients_list)
+        insert_query = f"""
+            INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+            VALUES ('{ingredients_string}', '{name_on_order}')
+        """
+        cur.execute(insert_query)
+        st.success('Order Submitted')
 
-        if st.button('Submit Order'):
-            # Insert order into Snowflake
-            insert_query = f"""
-                INSERT INTO smoothies.public.orders (ingredients, name_on_order)
-                VALUES ('{ingredients_string}', '{name_on_order}')
-            """
-            cur.execute(insert_query)
-            st.success('Order Submitted')
-
-            # After submitting the order, display nutritional information about a fruit
-            fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
-            fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
+        # For each fruit in the list, fetch and display nutritional information
+        for fruit_chosen in ingredients_list:
+            st.subheader(fruit_chosen + ' Nutrition Information')
+            fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_chosen}")
+            if fruityvice_response.ok:
+                fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
+            else:
+                st.error(f"Failed to get nutritional information for {fruit_chosen}")
 
 finally:
     cur.close()
