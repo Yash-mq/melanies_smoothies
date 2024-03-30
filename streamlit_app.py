@@ -35,29 +35,41 @@ if name_on_order:
 
 ingredients_list = st.multiselect(
     'Choose up to 5 ingredients:',
-    options=pd_df['FRUIT_NAME'].tolist(), # Display the fruit names in the multiselect
+    options=pd_df['FRUIT_NAME'].tolist(),  # Display the fruit names in the multiselect
     max_selections=5
 )
 
-if ingredients_list:
+# Button for submitting the order
+if ingredients_list and st.button('Submit Order'):
     ingredients_string = ', '.join(ingredients_list)
 
-    # For each fruit in the list, fetch the SEARCH_ON value and display nutritional information
-    for fruit_chosen in ingredients_list:
-        # Use the LOC function to find the SEARCH_ON value for the chosen fruit
-        search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
+    # Insert order into the Snowflake database
+    try:
+        insert_query = f"""
+            INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+            VALUES ('{ingredients_string}', '{name_on_order}')
+        """
+        cur.execute(insert_query)
+        st.success('Order Submitted')
 
-        st.write(f'The search value for {fruit_chosen} is {search_on}.')
+        # For each fruit in the list, fetch the SEARCH_ON value and display nutritional information
+        for fruit_chosen in ingredients_list:
+            # Use the LOC function to find the SEARCH_ON value for the chosen fruit
+            search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
 
-        # API call using the search_on value
-        fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{search_on}")
-        if fruityvice_response.ok:
-            # Process the API response here as needed, e.g., convert to dataframe
-            fruit_data = fruityvice_response.json()
-            st.subheader(f"{fruit_chosen} Nutrition Information")
-            st.json(fruit_data)  # or use st.dataframe() to display it as a table
-        else:
-            st.error(f"Failed to get nutritional information for {fruit_chosen}")
+            st.write(f'The search value for {fruit_chosen} is {search_on}.')
+
+            # API call using the search_on value
+            fruityvice_response = requests.get(f"https://fruityvice.com/api/fruit/{search_on}")
+            if fruityvice_response.ok:
+                # Process the API response here as needed, e.g., convert to dataframe
+                fruit_data = fruityvice_response.json()
+                st.subheader(f"{fruit_chosen} Nutrition Information")
+                st.json(fruit_data)  # or use st.dataframe() to display it as a table
+            else:
+                st.error(f"Failed to get nutritional information for {fruit_chosen}")
+    except Exception as e:
+        st.error(f"An error occurred while submitting the order: {e}")
 
 # Close the cursor and connection to Snowflake
 cur.close()
