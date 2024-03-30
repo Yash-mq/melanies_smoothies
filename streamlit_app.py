@@ -11,7 +11,7 @@ st.write('The name on your Smoothie will be:', name_on_order)
 # Initialize connection to Snowflake using the secrets
 snowflake_secrets = st.secrets["snowflake"]
 cnx = st.connection(
-    type="snowflake",
+    name="snowflake",
     account=snowflake_secrets["account"],
     user=snowflake_secrets["user"],
     password=snowflake_secrets["password"],
