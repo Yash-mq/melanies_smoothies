@@ -56,3 +56,13 @@ try:
 finally:
     cur.close()
     conn.close()
+
+
+# New section to display fruityvice nutrition information
+import requests
+
+fruityvice_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
+# st.text(fruityvice_response.json())  # This line is commented out
+
+# Convert the JSON response to a dataframe and display it using Streamlit
+fv_df = st.dataframe(data=fruityvice_response.json(), use_container_width=True)
